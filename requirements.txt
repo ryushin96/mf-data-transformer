@@ -8,8 +8,5 @@ selenium
 # And you have to download chromedriver and set PATH
 # http://chromedriver.chromium.org/downloads
 
-# Two step verifications
-# Time-based OTPs 
 pyotp
-# Gmail
 pytz
