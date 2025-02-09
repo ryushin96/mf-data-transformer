@@ -10,3 +10,4 @@ selenium
 
 pyotp
 pytz
+python-dotenv

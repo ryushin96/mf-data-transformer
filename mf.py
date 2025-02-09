@@ -6,17 +6,20 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 
-import requests
 
-import os, time, datetime
-import imaplib, email, re, pyotp, pytz
+import time, datetime
+import pytz
 
-MF_ID = "kuboken3398.trade@gmail.com"
-MF_PASS = "AzureAssetApp"
 
 class MoneyForward:
-    def __init__(self) -> None:
-        self.stock_price_cache: dict[str, float] = dict()
+    def __init__(self, mf_id, mf_pass) -> None:
+        self.mf_id = mf_id
+        self.mf_pass = mf_pass
+        self.depo_keys = ["name", "balance", "institution"]
+        self.eq_keys = ["code", "name", "owned_number", "get_value", "current_value", "valuation", "change_previousday", "valuation_profitloss", "valuation_profitloss_ratio", "institution"]
+        self.mf_keys = ["name", "owned_number", "get_value", "current_value", "valuation", "change_previousday", "valuation_profitloss", "valuation_profitloss_ratio", "institution"]
+        self.pns_keys = ["name", "get_value", "current_value", "valuation_profitloss", "valuation_profitloss_ratio", "acquisition_date"]
+        self.po_keys = ["name", "kind", "point", "rate", "current_value", "institution"]
 
     def init(self):
         logger.info("selenium initializing...")
@@ -40,10 +43,8 @@ class MoneyForward:
 
     def login(self):
         self.driver.execute_script("window.open()")
-        if not "MF_ID" in os.environ or not "MF_PASS" in os.environ:
-            raise ValueError("env MF_ID and/or MF_PASS are not found.")
-        mf_id = MF_ID #os.environ[""]
-        mf_pass = MF_PASS #os.environ["MF_PASS"]
+        mf_id = self.mf_id #os.environ[""]
+        mf_pass = self.mf_pass #os.environ["MF_PASS"]
 
         # ログインページに移動
         self.driver.get("https://ssnb.x.moneyforward.com/users/sign_in")
@@ -58,7 +59,7 @@ class MoneyForward:
         self.send_to_element('//input[@type="email"]', mf_id)
 
         # パスワード入力
-        time.sleep(0.3)
+        time.sleep(0.25)
         self.send_to_element('//input[@type="password"]', mf_pass)
 
         # ログインボタンをクリックする前に待機
@@ -74,34 +75,41 @@ class MoneyForward:
     def portfolio(self):
         self.driver.get("https://ssnb.x.moneyforward.com/bs/portfolio")
         self.wait.until(ec.presence_of_all_elements_located)
-        #elements = self.driver.find_elements(by=By.XPATH, value='//*[@id="portfolio_det_eq"]/table/tbody/tr')
-        elements = self.driver.find_elements(by=By.XPATH, value='//*[@id="portfolio_det_depo"]/section/table/tbody')
-        print("element表示")
-        print(elements)
+        elements_depo = self.driver.find_elements(by=By.XPATH, value='//*[@id="portfolio_det_depo"]/section/table/tbody/tr')# 預貯金
+        elements_eq = self.driver.find_elements(by=By.XPATH, value='//*[@id="portfolio_det_eq"]/table/tbody/tr')# 個別株
+        elements_mf = self.driver.find_elements(by=By.XPATH, value='//*[@id="portfolio_det_mf"]/table/tbody/tr')# 投資信託
+        elements_pns = self.driver.find_elements(by=By.XPATH, value='//*[@id="portfolio_det_pns"]/table/tbody/tr')# 年金
+        elements_po = self.driver.find_elements(by=By.XPATH, value='//*[@id="portfolio_det_po"]/table/tbody/tr')# ポイント
+
+        depo = self.format_table(elements_depo, self.depo_keys)
+        eq = self.format_table(elements_eq, self.eq_keys)
+        mf = self.format_table(elements_mf, self.mf_keys)
+        pns = self.format_table(elements_pns, self.pns_keys)
+        po = self.format_table(elements_po, self.po_keys)
+
+        raw_asset = {
+            "depo": depo,
+            "eq": eq,
+            "mf": mf,
+            "pns": pns,
+            "po": po
+        }
+        return raw_asset
+
+
+    def format_table(self, elements, keys):
+        element = {}
         for i in range(len(elements)):
             tds = elements[i].find_elements(by=By.TAG_NAME, value="td")
-            print("tds:", tds)
-            name = tds[1].text
-            no = tds[0].text
-            print("no", no)
-            print("name:", name)
-            # if name[0:1] == "#":
-            #     entry = name.split("-")
-            #     stock_price = self.stock_price(entry[1])
-            #     stock_count = int(entry[2])
-            #     print(f"stock price:{stock_price}, stock_count: {stock_count}")
-            #     logger.info(entry[0] + ": " + entry[1] + " is " + str(stock_price) + "USD (" + str(int(usdrate * stock_price)) + " JPY) x " + str(stock_count))
-            #     img = tds[11].find_element(by=By.TAG_NAME, value="img")
-            #     self.driver.execute_script("arguments[0].click();", img)
-            #     det_value = tds[11].find_element(by=By.ID, value="user_asset_det_value")
-            #     commit = tds[11].find_element(by=By.NAME, value="commit")
-            #     time.sleep(1)
-            #     self.send_to_element_direct(det_value, str(int(usdrate * stock_price) * stock_count))
-            #     commit.click()
-            #     time.sleep(1)
-            #     logger.info(entry[0] + " is updated.")
-            #     elements = self.driver.find_elements(by=By.XPATH, value='//*[@id="portfolio_det_eq"]/table/tbody/tr')  # avoid stale error
+            name = tds[0].text
+            if name not in element:
+                element[name] = {} 
 
+            for j in range(len(keys)):
+                element[name][keys[j]] = tds[j].text
+        return element
+    
+        
 
     def close(self):
         try:
@@ -124,14 +132,3 @@ class MoneyForward:
         logger.debug("[send_to_element] " + element.get_attribute("id"))
         element.send_keys(keys)
 
-
-if __name__ == "__main__":
-    if "LOG_LEVEL" in os.environ:
-        logzero.loglevel(int(os.environ["LOG_LEVEL"]))
-    mf = MoneyForward()
-    try:
-        mf.init()
-        mf.login()
-        mf.portfolio()
-    finally:
-        mf.close()
