@@ -1,5 +1,4 @@
 from logzero import logger
-import logzero
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
