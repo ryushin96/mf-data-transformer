@@ -1,0 +1,7 @@
+version: "3"
+services:
+  mf-data-transformer:
+    volumes:
+      - ..:/workspace:cached
+    environment:
+      - ENV=development

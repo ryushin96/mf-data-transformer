@@ -1,0 +1,21 @@
+{
+  "name": "mf-data-transformer Dev Container",
+  "dockerComposeFile": [
+    "../docker-compose.yaml",
+    "docker-compose.override.yaml"
+  ],
+  "service": "mf-data-transformer",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "ms-python.python",
+        "eamodio.gitlens"
+      ]
+    }
+  },
+  "remoteUser": "root"
+}

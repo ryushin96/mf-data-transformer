@@ -1,18 +1,5 @@
-# DO NOT include azure-functions-worker in this file
-# The Python Worker is managed by Azure Functions platform
-# Manually managing azure-functions-worker may cause unexpected issues
-
-azure-functions
-# Basic
-logzero
-requests
-
-# Selenium
 selenium
-
-# And you have to download chromedriver and set PATH
-# http://chromedriver.chromium.org/downloads
-
-pyotp
-pytz
+logzero
 python-dotenv
+pytz
+

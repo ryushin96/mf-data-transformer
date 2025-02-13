@@ -1,0 +1,21 @@
+version: "3"
+services:
+  selenium:
+    container_name: selenium-chrome
+    image: seleniarm/standalone-chromium
+    # image: selenium/standalone-chrome
+    ports:
+      - "4444:4444"
+      - "5900:5900"
+      - "7900:7900"
+    environment:
+      - SE_VNC_NO_PASSWORD=1
+
+  mf-data-transformer:
+    container_name: mf-data-transformer
+    build: .
+    volumes:
+      - .:/workspace
+    tty: true
+    depends_on:
+      - selenium
