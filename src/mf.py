@@ -4,6 +4,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 import os
 import time
 
@@ -77,6 +78,28 @@ class MoneyForward:
             self.wait.until(ec.presence_of_element_located((By.XPATH, xpath)))
         except Exception as e:
             logger.error(f"要素{xpath}の待機中にエラーが発生しました: {e}")
+
+    def reload(self):
+        """MoneyForwardのデータ更新"""
+        self.driver.get("https://ssnb.x.moneyforward.com/accounts")
+        # IDを持つ 'tr' 要素数取得
+        rows = self.driver.find_elements(By.XPATH, "//tr[@id]")  
+        # print(f"IDを持つ行の数: {len(rows)}")
+        # 各行の「更新」ボタンをクリック
+        for row in rows:
+            row_id = row.get_attribute("id")
+            try:
+                # # 「更新」ボタンを検索（その `tr` 内で `input` を探す）
+                # update_button = row.find_element(By.XPATH, ".//input[@type='submit' and contains(@class, 'ga-refresh-account-button')]")
+                # 「更新」ボタンの XPath を作成（'tr' 内にある 'input'を探す）
+                update_button_xpath = ".//input[@type='submit' and contains(@class, 'ga-refresh-account-button')]"
+                self.wait_until_element_present(update_button_xpath,10)
+                update_button = row.find_element(By.XPATH, update_button_xpath)
+                update_button.click()
+                print(f"update success: {row_id} の更新ボタンをクリックしました")
+                time.sleep(1)  # クリック間隔
+            except Exception as e:
+                print(f"update failure: {row_id} の更新ボタンをクリックできませんでした: {e}")
 
     def close(self):
         """Selenium WebDriverを閉じる"""

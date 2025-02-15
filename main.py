@@ -8,6 +8,7 @@ try:
     mf = MoneyForward(Config.MF_ID, Config.MF_PASS)
     mf.init()
     mf.login()
+    mf.reload()
     raw_asset = mf.portfolio()
     asset = AssetProcessor.add_timestamp(raw_asset)
     print(asset)
