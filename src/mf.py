@@ -21,12 +21,12 @@ class MoneyForward:
         self.driver = None
         self.wait = None
 
-    def init(self):
+    def init(self, selenium_remote_url):
         """Initialize Selenium WebDriver."""
         logger.info("Initializing Selenium WebDriver...")
         
         chrome_options = Options()
-#        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--window-size=800x1000")
@@ -38,11 +38,21 @@ class MoneyForward:
         chrome_options.add_argument("--blink-settings=imagesEnabled=false")
         chrome_options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36")
 
-        selenium_remote_url = "http://selenium:4444/wd/hub"
-        self.driver = webdriver.Remote(command_executor=selenium_remote_url, options=chrome_options)
-        self.wait = WebDriverWait(self.driver, 10)
-        self.driver.implicitly_wait(10)
-        logger.info("Selenium WebDriver initialized.")
+
+        # Seleniumが立ち上がるまで待機（最大30秒）
+        max_wait_time = 30
+        for _ in range(max_wait_time):
+            try:
+                self.driver = webdriver.Remote(command_executor=selenium_remote_url, options=chrome_options)
+                self.wait = WebDriverWait(self.driver, 10)
+                self.driver.implicitly_wait(10)
+                logger.info("Selenium WebDriver initialized.")
+                break  # WebDriverが正常に初期化できたらループを抜ける
+            except Exception as e:
+                logger.warning(f"Selenium initialization failed: {e}")
+                time.sleep(1)  # 1秒待機して再試行
+        else:
+            logger.error("Failed to initialize Selenium WebDriver after waiting for 30 seconds.")
 
     def login(self):
         """MoneyForwardのウェブサイトにログインする"""

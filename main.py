@@ -6,7 +6,7 @@ from src.asset_processor import AssetProcessor
 
 try:
     mf = MoneyForward(Config.MF_ID, Config.MF_PASS)
-    mf.init()
+    mf.init(Config.SELENIUM_REMOTE_URL)
     mf.login()
     mf.reload()
     raw_asset = mf.portfolio()
